@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MicroGPT — Name Generator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Google+Sans:ital,opsz,wght@0,17..18,400..700;1,17..18,400..700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:      #13131f;
+      --surface:   #1c1c2e;
+      --surface2:  #22223a;
+      --border:    #2e2e50;
+      --purple:    #8b2be2;
+      --purple-h:  #a040ff;
+      --text:      #e8e8f0;
+      --muted:     #6b6b90;
+      --latin:     'Google Sans', system-ui, sans-serif;
+    }
+
+    body {
+      font-family: var(--latin);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 2.5rem 1rem;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 2rem;
+      width: 100%;
+      max-width: 640px;
+    }
+
+    .header { margin-bottom: 1.75rem; }
+    .header h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #fff;
+      line-height: 1.4;
+    }
+    .header p {
+      font-size: 0.9rem;
+      color: var(--muted);
+      margin-top: 0.25rem;
+    }
+
+    .field { margin-bottom: 1.25rem; }
+
+    label.field-label {
+      display: block;
+      font-size: 0.72rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      margin-bottom: 0.5rem;
+    }
+
+    input[type="text"], input[type="number"] {
+      width: 100%;
+      background: var(--surface2);
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      color: var(--text);
+      padding: 0.75rem 1rem;
+      font-size: 1rem;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    input[type="text"]:focus, input[type="number"]:focus { border-color: var(--purple); }
+
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+
+    .slider-column {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .slider-wrap {
+      display: flex;
+      align-items: center;
+      flex-grow: 1;
+      padding-bottom: 5px;
+    }
+
+    input[type="range"] {
+      flex: 1; height: 4px;
+      -webkit-appearance: none;
+      background: linear-gradient(to right, var(--purple) var(--pct, 50%), var(--border) var(--pct, 50%));
+      border-radius: 4px;
+      outline: none;
+      cursor: pointer;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 18px; height: 18px;
+      border-radius: 50%;
+      background: var(--purple);
+      border: 2px solid #fff;
+      cursor: pointer;
+    }
+
+    #btn {
+      width: 100%;
+      padding: 0.9rem;
+      background: var(--purple);
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      font-size: 1.05rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.2s, opacity 0.2s;
+      margin-bottom: 1.5rem;
+      letter-spacing: 0.02em;
+    }
+    #btn:hover { background: var(--purple-h); }
+    #btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    #results { min-height: 2rem; }
+
+    .tag-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr); 
+      gap: 0.5rem;
+    }
+
+    .tag {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.5rem;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+      text-align: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 48px;
+      font-size: 0.85rem;
+      color: var(--text);
+      word-break: break-word;
+    }
+    .tag:hover { border-color: var(--purple); background: #2a2a45; }
+
+    @media (max-width: 500px) {
+      .tag-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+<div class="card">
+  <div class="header">
+    <h1>Name Generator</h1>
+    <p>MicroGPT — Khmer Name Generation</p>
+  </div>
+
+  <form id="genForm" onsubmit="event.preventDefault(); generate();">
+    <div class="field">
+      <label class="field-label" for="prefix">Prefix (optional)</label>
+      <input id="prefix" type="text" placeholder="e.g. Alex, Sam, Dara..." autocomplete="off" />
+    </div>
+
+    <div class="row" style="margin-bottom:1.25rem">
+      <div class="field" style="margin-bottom:0">
+        <label class="field-label" for="count">Count</label>
+        <input id="count" type="number" value="10" min="1" max="50" />
+      </div>
+      <div class="field slider-column" style="margin-bottom:0">
+        <label class="field-label">Temperature <span id="tempVal">0.5</span></label>
+        <div class="slider-wrap">
+          <input id="temperature" type="range" min="0.0" max="1.0" step="0.1" value="0.5" />
+        </div>
+      </div>
+    </div>
+
+    <button id="btn" type="submit">Generate Names</button>
+  </form>
+
+  <div id="results"></div>
+</div>
+
+<script>
+  const API = '';
+  const MODEL = 'khmer_names';
+
+  const slider = document.getElementById('temperature');
+  function updateSlider() {
+    const min = parseFloat(slider.min), max = parseFloat(slider.max), val = parseFloat(slider.value);
+    const pct = ((val - min) / (max - min) * 100).toFixed(1) + '%';
+    slider.style.setProperty('--pct', pct);
+    document.getElementById('tempVal').textContent = val.toFixed(1);
+  }
+  slider.addEventListener('input', updateSlider);
+  updateSlider();
+
+  async function generate() {
+    const btn         = document.getElementById('btn');
+    const out         = document.getElementById('results');
+    const prefix      = document.getElementById('prefix').value.trim();
+    const temperature = parseFloat(slider.value);
+    const count       = parseInt(document.getElementById('count').value);
+
+    btn.disabled = true;
+    btn.textContent = 'Generating...';
+    out.innerHTML = '';
+
+    try {
+      const res = await fetch(`${API}/generate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prefix, temperature, count, model: MODEL }),
+      });
+      if (!res.ok) { 
+        const e = await res.json().catch(() => ({})); 
+        throw new Error(e.detail || res.statusText); 
+      }
+      const data = await res.json();
+
+      if (!data.results || data.results.length === 0) {
+        out.innerHTML = `<p style="color: var(--muted); font-size: 0.9rem;">No results found.</p>`;
+        return;
+      }
+
+      let html = '<div class="tag-grid">';
+      data.results.forEach(name => {
+        // Simple escape for single quotes to prevent breaking the onclick attribute
+        const safeName = name.replace(/'/g, "\\'");
+        html += `<div class="tag" onclick="copy('${safeName}')">${name}</div>`;
+      });
+      html += '</div>';
+      out.innerHTML = html;
+
+    } catch (err) {
+      out.innerHTML = `<p style="color: #ff6b6b; font-size: 0.9rem;">Error: ${err.message}</p>`;
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Generate Names';
+    }
+  }
+
+  function copy(text) {
+    navigator.clipboard.writeText(text).then(() => {
+        // Optional: you could add a "Copied!" toast here
+    }).catch(() => {});
+  }
+</script>
+</body>
+</html>
