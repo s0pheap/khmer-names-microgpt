@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+
+# Virtual environment
+venv/
+.venv/
+env/
+.env
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Training artifacts
+# data/checkpoint_*.json  ← uncomment to exclude JSON checkpoints
+# data/checkpoint_*.npz   ← uncomment to exclude NumPy checkpoints
+
+# Input file used by original microgpt.py
+input.txt
